@@ -1,5 +1,6 @@
 package com.example;
 
+import com.example.block.AnchorState;
 import com.google.gson.*;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -18,6 +19,7 @@ import java.io.FileReader;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class BuildHandler {
     public static final String PARENT_PATH = "config/mybuilds";
@@ -48,16 +50,24 @@ public class BuildHandler {
     public static void loadAndPlace(ServerCommandSource source, String filename) {
         ServerWorld world = source.getWorld();
         ServerPlayerEntity player = source.getPlayer();
-        //BlockPos origin = player.getBlockPos();
-        //Direction facing = player.getHorizontalFacing();
-        AnchorResult anchor = findAnchorBlock(world, player.getBlockPos(), 10);
-        if (anchor == null) {
-            player.sendMessage(Text.literal("No Anchor Block Found or Too Far, Please Place One Nearby"), false);
+        BlockPos playerPos = player.getBlockPos();
+        
+        AnchorState cache = AnchorState.getState(world.getServer());// 获取缓存
+        BlockPos anchorPos = findNearest(cache.getAnchors(), playerPos);// 查找最近的锚点
+        if (anchorPos == null) {
+            player.sendMessage(Text.literal("Not Found Anchor, Please Place Anchor First"), false);
             return;
         }
 
-        BlockPos origin = anchor.pos;
-        Direction facing = anchor.facing;
+        BlockState anchorState = world.getBlockState(anchorPos);
+        if (!(anchorState.getBlock() instanceof com.example.block.AnchorBlock)) {
+            // 缓存中的 Anchor 无效或不在当前维度已加载区块
+            player.sendMessage(Text.literal("Invalid Anchor, Please Place Anchor First"), false);
+            return;
+        }
+
+        Direction facing = anchorState.get(Properties.HORIZONTAL_FACING);
+        BlockPos origin = anchorPos;
 
         try {
             Path filePath = Paths.get(PARENT_PATH, filename + ".json"); // 存放目录
@@ -101,22 +111,17 @@ public class BuildHandler {
         }
     }
 
-    // 寻找锚点方块
-    private static AnchorResult findAnchorBlock(ServerWorld world, BlockPos center, int radius) {
-        BlockPos.Mutable mutable = new BlockPos.Mutable();// 可变的位置对象
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dy = -radius; dy <= radius; dy++) {
-                for (int dz = -radius; dz <= radius; dz++) {
-                    mutable.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
-                    BlockState state = world.getBlockState(mutable);
-                    if (state.getBlock() instanceof com.example.block.AnchorBlock) {
-                        Direction facing = state.get(Properties.HORIZONTAL_FACING);
-                        return new AnchorResult(mutable.toImmutable(), facing);
-                    }
-                }
+    // 寻找最近的锚点方块
+    private static BlockPos findNearest(List<BlockPos> anchors, BlockPos playerPos) {
+        double best = Double.MAX_VALUE;
+        BlockPos bestPos = null;
+        for (BlockPos p : anchors) {
+            double d = p.getSquaredDistance(playerPos);
+            if (d < best) {
+                best = d;
+                bestPos = p;
             }
         }
-        return null;
+        return bestPos;
     }
-    private record AnchorResult(BlockPos pos, Direction facing) {}
 }

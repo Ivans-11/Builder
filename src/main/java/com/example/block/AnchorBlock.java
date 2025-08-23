@@ -3,6 +3,7 @@ package com.example.block;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShapeContext;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.block.HorizontalFacingBlock;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Properties;
@@ -11,7 +12,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.world.ServerWorld;
+
 import com.mojang.serialization.MapCodec;
 
 // 锚点方块
@@ -76,5 +81,23 @@ public class AnchorBlock extends HorizontalFacingBlock {
     @Override
 	public BlockState getPlacementState(ItemPlacementContext ctx) {
 		return super.getPlacementState(ctx).with(Properties.HORIZONTAL_FACING, ctx.getHorizontalPlayerFacing().getOpposite());
+	}
+
+	// 放置时添加到缓存中
+	@Override
+    public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+        super.onPlaced(world, pos, state, placer, stack);
+        if (!world.isClient && world instanceof ServerWorld sw) {
+            AnchorState.getState(sw.getServer()).add(pos);
+        }
+    }
+
+	// 移除时从缓存中移除
+    @Override
+    public void onStateReplaced(BlockState state, ServerWorld world, BlockPos pos, boolean moved) {
+        super.onStateReplaced(state, world, pos, moved);
+        if (!moved) {
+			AnchorState.getState(world.getServer()).remove(pos);
+		}
 	}
 }

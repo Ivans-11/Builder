@@ -15,11 +15,20 @@ import net.minecraft.state.property.Properties;
 import net.minecraft.text.Text;
 
 import java.io.FileReader;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class BuildHandler {
     public static final String PARENT_PATH = "config/mybuilds";
+
+    // 创建目录
+    public static void init() {
+        File dir = new File(PARENT_PATH);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+    }
 
     // 列举文件名
     public static void listBuilds(ServerCommandSource source) {

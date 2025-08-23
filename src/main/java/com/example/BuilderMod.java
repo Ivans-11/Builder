@@ -23,15 +23,20 @@ public class BuilderMod implements ModInitializer {
         // 注册方块
         BuilderBlocks.init();
 
+        // 处理器初始化
+        BuildHandler.init();
+
         // 注册命令
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
 			dispatcher.register(literal("builder")
-					.then(CommandManager.argument("filename", StringArgumentType.string())
-                            .executes(context -> {
-                                String filename = StringArgumentType.getString(context, "filename");
-								BuildHandler.loadAndPlace(context.getSource(), filename);
-                                return 1;
-                            })
+                    .then(literal("place")
+					        .then(CommandManager.argument("filename", StringArgumentType.string())
+                                    .executes(context -> {
+                                        String filename = StringArgumentType.getString(context, "filename");
+								        BuildHandler.loadAndPlace(context.getSource(), filename);
+                                        return 1;
+                                    })
+                            )
                     )
                     .then(literal("list")
                             .executes(context -> {

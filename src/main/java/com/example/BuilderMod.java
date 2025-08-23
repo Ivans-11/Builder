@@ -6,7 +6,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.server.command.CommandManager;
 import static net.minecraft.server.command.CommandManager.literal;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +19,9 @@ public class BuilderMod implements ModInitializer {
 
 	@Override
     public void onInitialize() {
-        LOGGER.info("Hello Fabric world!");
+
+        // 注册方块
+        BuilderBlocks.init();
 
         // 注册命令
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
@@ -29,6 +30,12 @@ public class BuilderMod implements ModInitializer {
                             .executes(context -> {
                                 String filename = StringArgumentType.getString(context, "filename");
 								BuildHandler.loadAndPlace(context.getSource(), filename);
+                                return 1;
+                            })
+                    )
+                    .then(literal("list")
+                            .executes(context -> {
+                                BuildHandler.listBuilds(context.getSource());
                                 return 1;
                             })
                     )

@@ -3,13 +3,14 @@
 	"id": "builder",
 	"version": "${version}",
 	"name": "Builder",
-	"description": "This mod uses Minecrftify-generated JSON files to batch import blocks into Minecraft.",
+	"description": "A Fabric mod that imports builds in bulk from specially formatted JSON files.",
 	"authors": [
 		"Ivans"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/Ivans-11/Builder",
+		"sources": "https://github.com/Ivans-11/Builder",
+		"issues": "https://github.com/Ivans-11/Builder/issues"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/builder/icon.png",

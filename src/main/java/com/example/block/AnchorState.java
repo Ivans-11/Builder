@@ -13,7 +13,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
-// 锚点状态，用于保存锚点的位置
+// State of anchor, used to save the position of anchors
 public class AnchorState extends PersistentState{
     
     private static final String KEY = "anchor_state";
@@ -21,7 +21,7 @@ public class AnchorState extends PersistentState{
 
     private AnchorState() {}
     private AnchorState(List<BlockPos> loaded) {
-        // 通过 CODEC 读取到的列表
+        // Read list from CODEC
         if (loaded != null) anchors.addAll(loaded);
     }
 
@@ -51,9 +51,9 @@ public class AnchorState extends PersistentState{
     private static final PersistentStateType<AnchorState> TYPE =
             new PersistentStateType<>(
                 KEY,
-                AnchorState::new, // 没有存档时，创建空实例
+                AnchorState::new, // Create a new instance when no data is saved
                 CODEC,
-                null // DataFixTypes，可为 null
+                null // DataFixTypes，can be null
             );
 
     public static AnchorState getState(MinecraftServer server) {

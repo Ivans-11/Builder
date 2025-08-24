@@ -13,25 +13,21 @@ import org.slf4j.LoggerFactory;
 
 public class BuilderMod implements ModInitializer {
 	public static final String MOD_ID = "builder";
-
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	@Override
     public void onInitialize() {
 
-        // 注册方块
+        // Register the blocks
         BuilderBlocks.init();
 
-        // 处理器初始化
+        // Initialize the build handler
         BuildHandler.init();
 
-        // 注册命令
+        // Register the commands
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
 			dispatcher.register(literal("builder")
-                    .then(literal("place")// 根据文件批量放置方块
+                    .then(literal("place")// Place blocks based on the file
 					        .then(CommandManager.argument("filename", StringArgumentType.string())
                                     .executes(context -> {
                                         String filename = StringArgumentType.getString(context, "filename");
@@ -40,24 +36,31 @@ public class BuilderMod implements ModInitializer {
                                     })
                             )
                     )
-                    .then(literal("list")// 列举文件名
+                    .then(literal("list")// List available build files
                             .executes(context -> {
                                 BuildHandler.listBuilds(context.getSource());
                                 return 1;
                             })
                     )
-                    .then(literal("anchors")// 列举锚点位置
+                    .then(literal("anchors")// List anchor positions
                            .executes(context -> {
                                 BuildHandler.listAnchors(context.getSource());
                                 return 1;
                             })
                     )
-                    .then(literal("help")// 帮助
+                    .then(literal("undo")// Undo the last build action
+                          .executes(context -> {
+                                UndoManager.undo(context.getSource().getPlayer(), context.getSource().getWorld());
+                                return 1;
+                            })
+                    )
+                    .then(literal("help")// Display help message
                           .executes(context -> {
                                 context.getSource().sendFeedback(() -> Text.literal("Builder Mod Commands:"), false);
                                 context.getSource().sendFeedback(() -> Text.literal("/builder place <filename> - Place blocks based on the specified file."), false);
                                 context.getSource().sendFeedback(() -> Text.literal("/builder list - List available build files."), false);
                                 context.getSource().sendFeedback(() -> Text.literal("/builder anchors - List anchor positions."), false);
+                                context.getSource().sendFeedback(() -> Text.literal("/builder undo - Undo the last build action."), false);
                                 return 1;
                             })
                     )

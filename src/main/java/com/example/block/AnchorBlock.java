@@ -19,9 +19,9 @@ import net.minecraft.server.world.ServerWorld;
 
 import com.mojang.serialization.MapCodec;
 
-// 锚点方块
+// Block for anchor
 public class AnchorBlock extends HorizontalFacingBlock {
-	// codec 从 1.20.5 开始是必需的，但是还没有在 Minecraft 中实际使用。
+	// codec is required from 1.20.5 but not used in Minecraft yet.
 	public static final MapCodec<AnchorBlock> CODEC = Block.createCodec(AnchorBlock::new);
  
 	public AnchorBlock(Settings settings) {
@@ -39,7 +39,7 @@ public class AnchorBlock extends HorizontalFacingBlock {
 		builder.add(Properties.HORIZONTAL_FACING);
 	}
 
-    // 形状
+    // Shape of anchor
 	@Override
 	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext ctx) {
 		Direction dir = state.get(FACING);
@@ -47,28 +47,28 @@ public class AnchorBlock extends HorizontalFacingBlock {
 
     	switch (dir) {
         	case NORTH -> {
+				corner = VoxelShapes.cuboid(0, 0, 0, 0.125, 0.125, 0.125);
+	            xAxis = VoxelShapes.cuboid(0.125, 0, 0, 1, 0.125, 0.125);
+    	        yAxis = VoxelShapes.cuboid(0, 0.125, 0, 0.125, 1, 0.125);
+        	    zAxis = VoxelShapes.cuboid(0, 0, 0.125, 0.125, 0.125, 1);
+        	}
+	        case SOUTH -> {
+				corner = VoxelShapes.cuboid(0.875, 0, 0.875, 1, 0.125, 1);
+        	    xAxis = VoxelShapes.cuboid(0, 0, 0.875, 0.875, 0.125, 1);
+            	yAxis = VoxelShapes.cuboid(0.875, 0.125, 0.875, 1, 1, 1);
+            	zAxis = VoxelShapes.cuboid(0.875, 0, 0, 1, 0.125, 0.875);
+	        }
+    	    case EAST -> {
 				corner = VoxelShapes.cuboid(0.875, 0, 0, 1, 0.125, 0.125);
             	xAxis = VoxelShapes.cuboid(0, 0, 0, 0.875, 0.125, 0.125);
 	            yAxis = VoxelShapes.cuboid(0.875, 0.125, 0, 1, 1, 0.125);
     	        zAxis = VoxelShapes.cuboid(0.875, 0, 0.125, 1, 0.125, 1);
         	}
-	        case SOUTH -> {
+	        case WEST -> {
 				corner = VoxelShapes.cuboid(0, 0, 0.875, 0.125, 0.125, 1);
         	    xAxis = VoxelShapes.cuboid(0.125, 0, 0.875, 1, 0.125, 1);
             	yAxis = VoxelShapes.cuboid(0, 0.125, 0.875, 0.125, 1, 1);
 	            zAxis = VoxelShapes.cuboid(0, 0, 0, 0.125, 0.125, 0.875);
-	        }
-    	    case EAST -> {
-        	    corner = VoxelShapes.cuboid(0.875, 0, 0.875, 1, 0.125, 1);
-        	    xAxis = VoxelShapes.cuboid(0, 0, 0.875, 0.875, 0.125, 1);
-            	yAxis = VoxelShapes.cuboid(0.875, 0.125, 0.875, 1, 1, 1);
-            	zAxis = VoxelShapes.cuboid(0.875, 0, 0, 1, 0.125, 0.875);
-        	}
-	        case WEST -> {
-				corner = VoxelShapes.cuboid(0, 0, 0, 0.125, 0.125, 0.125);
-	            xAxis = VoxelShapes.cuboid(0.125, 0, 0, 1, 0.125, 0.125);
-    	        yAxis = VoxelShapes.cuboid(0, 0.125, 0, 0.125, 1, 0.125);
-        	    zAxis = VoxelShapes.cuboid(0, 0, 0.125, 0.125, 0.125, 1);
     	    }
         	default -> {
             	return VoxelShapes.fullCube();
@@ -77,13 +77,13 @@ public class AnchorBlock extends HorizontalFacingBlock {
     	return VoxelShapes.union(corner, xAxis, yAxis, zAxis);
 	}
 
-    // 放置时朝向(将玩家朝向的相反方向作为放置的朝向)
+	// When placed, the facing direction is the opposite of the player's facing direction.
     @Override
 	public BlockState getPlacementState(ItemPlacementContext ctx) {
 		return super.getPlacementState(ctx).with(Properties.HORIZONTAL_FACING, ctx.getHorizontalPlayerFacing().getOpposite());
 	}
 
-	// 放置时添加到缓存中
+	// Add to cache when placed
 	@Override
     public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         super.onPlaced(world, pos, state, placer, stack);
@@ -92,7 +92,7 @@ public class AnchorBlock extends HorizontalFacingBlock {
         }
     }
 
-	// 移除时从缓存中移除
+	// Remove from cache when broken
     @Override
     public void onStateReplaced(BlockState state, ServerWorld world, BlockPos pos, boolean moved) {
         super.onStateReplaced(state, world, pos, moved);

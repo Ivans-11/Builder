@@ -1,6 +1,6 @@
 {
     "model": {
       "type": "minecraft:model",
-      "model": "builder:block/anchor_block"
+      "model": "builder:item/anchor_block"
     }
 }

@@ -16,7 +16,7 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.Identifier;
 
-public class BuilderBlocks {// 方块注册
+public class BuilderBlocks {// Register Blocks
     public static final AnchorBlock ANCHOR_BLOCK = register("anchor_block", AnchorBlock::new, Block.Settings.create().strength(4.0f));
     public static final BlockItem ANCHOR_BLOCK_ITEM = registerItem("anchor_block", settings -> new BlockItem(ANCHOR_BLOCK, settings));
     
@@ -35,6 +35,6 @@ public class BuilderBlocks {// 方块注册
     public static void init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS).register(entries -> {
             entries.add(ANCHOR_BLOCK_ITEM);
-        });// 将方块加入到构建方块组
+        });// Adds the Anchor Block to the Building Blocks tab
     }
 }

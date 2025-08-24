@@ -19,13 +19,14 @@ import java.io.FileReader;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class BuildHandler {
     public static final String PARENT_PATH = "config/mybuilds";
 
-    // 创建目录
+    // Create a new directory if it doesn't exist
     public static void init() {
         File dir = new File(PARENT_PATH);
         if (!dir.exists()) {
@@ -33,10 +34,10 @@ public class BuildHandler {
         }
     }
 
-    // 列举文件名
+    // List all JSON files in the directory
     public static void listBuilds(ServerCommandSource source) {
         ServerPlayerEntity player = source.getPlayer();
-        Path filePath = Paths.get(PARENT_PATH); // 存放目录
+        Path filePath = Paths.get(PARENT_PATH);
         String[] files = filePath.toFile().list();
         if (files!= null) {
             for (String file : files) {
@@ -47,25 +48,25 @@ public class BuildHandler {
         }
     }
 
-    // 列举锚点位置
+    // List all AnchorBlock positions
     public static void listAnchors(ServerCommandSource source) {
         ServerPlayerEntity player = source.getPlayer();
         ServerWorld world = source.getWorld();
-        AnchorState cache = AnchorState.getState(world.getServer());// 获取缓存
-        List<BlockPos> anchors = cache.getAnchors();// 获取锚点列表
+        AnchorState cache = AnchorState.getState(world.getServer());// Get cache
+        List<BlockPos> anchors = cache.getAnchors();// Get anchors
         for (BlockPos p : anchors) {
             player.sendMessage(Text.literal(p.toString()), false);
         }
     }
 
-    // 加载并放置方块
+    // Load and place a build from a JSON file
     public static void loadAndPlace(ServerCommandSource source, String filename) {
         ServerWorld world = source.getWorld();
         ServerPlayerEntity player = source.getPlayer();
         BlockPos playerPos = player.getBlockPos();
         
-        AnchorState cache = AnchorState.getState(world.getServer());// 获取缓存
-        BlockPos anchorPos = findNearest(cache.getAnchors(), playerPos);// 查找最近的锚点
+        AnchorState cache = AnchorState.getState(world.getServer());// Get cache
+        BlockPos anchorPos = findNearest(cache.getAnchors(), playerPos);// Find nearest anchor
         if (anchorPos == null) {
             player.sendMessage(Text.literal("Not Found Anchor, Please Place Anchor First"), false);
             return;
@@ -73,7 +74,7 @@ public class BuildHandler {
 
         BlockState anchorState = world.getBlockState(anchorPos);
         if (!(anchorState.getBlock() instanceof com.example.block.AnchorBlock)) {
-            // 缓存中的 Anchor 无效或不在当前维度已加载区块
+            // Not found anchor
             player.sendMessage(Text.literal("Invalid Anchor, Please Place Anchor First"), false);
             return;
         }
@@ -82,9 +83,10 @@ public class BuildHandler {
         BlockPos origin = anchorPos;
 
         try {
-            Path filePath = Paths.get(PARENT_PATH, filename + ".json"); // 存放目录
-            //JsonArray arr = JsonParser.parseReader(new FileReader(filePath.toFile())).getAsJsonArray();
+            Path filePath = Paths.get(PARENT_PATH, filename + ".json");
             JsonObject obj = JsonParser.parseReader(new FileReader(filePath.toFile())).getAsJsonObject();
+
+            List<UndoManager.BlockSnapshot> snapshots = new ArrayList<>();
 
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
                 String blockId = entry.getKey();
@@ -99,10 +101,15 @@ public class BuildHandler {
                     int dz = arr.get(2).getAsInt();
 
                     BlockPos placePos = transformPos(origin, dx, dy, dz, facing);
+
+                    BlockState oldState = world.getBlockState(placePos);
+                    snapshots.add(new UndoManager.BlockSnapshot(placePos, oldState));
+
                     world.setBlockState(placePos, block.getDefaultState());
                 }
             }
 
+            UndoManager.record(player, snapshots);// Record snapshots
             player.sendMessage(Text.literal("Build Success: " + filename), false);
 
         } catch (Exception e) {
@@ -111,18 +118,18 @@ public class BuildHandler {
         }
     }
 
-    // 转换位置
+    // Transform position based on facing
     private static BlockPos transformPos(BlockPos origin, int dx, int dy, int dz, Direction facing) {
         switch (facing) {
-            case NORTH: return origin.add(-dx, dy, dz);
-            case SOUTH: return origin.add(dx, dy, -dz);
-            case EAST: return origin.add(-dz, dy, -dx);
-            case WEST: return origin.add(dz, dy, dx);
-            default: return origin.add(dx, dy, dz); // 默认朝向
+            case NORTH: return origin.add(dx, dy, dz);
+            case SOUTH: return origin.add(-dx, dy, -dz);
+            case EAST: return origin.add(-dz, dy, dx);
+            case WEST: return origin.add(dz, dy, -dx);
+            default: return origin.add(dx, dy, dz);
         }
     }
 
-    // 寻找最近的锚点方块
+    // Find the nearest anchor
     private static BlockPos findNearest(List<BlockPos> anchors, BlockPos playerPos) {
         double best = Double.MAX_VALUE;
         BlockPos bestPos = null;

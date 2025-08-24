@@ -25,7 +25,6 @@ Of course, this mod can also be used independently. As long as you can generate 
 1. Create a specially formatted JSON file under the `config/mybuilds/` directory, e.g. [`example.json`](./example.json)
 
    ```json
-   // Example
    {
        "minecraft:stone": [[1, 0, 0],[2, 0, 0],[3, 0, 0]],
        "minecraft:oak_planks": [[0, 1, 1],[0, 1, 2]]

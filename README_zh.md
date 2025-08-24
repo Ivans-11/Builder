@@ -24,7 +24,6 @@
 1. 在 `config/mybuilds/` 目录下创建特定格式的 JSON 文件，例如 [`example.json`](./example.json)
 
    ```json
-    // 示例
     {
         "minecraft:stone": [[1, 0, 0],[2, 0, 0],[3, 0, 0]],
         "minecraft:oak_planks": [[0, 1, 1],[0, 1, 2]]

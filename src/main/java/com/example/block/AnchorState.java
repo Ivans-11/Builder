@@ -46,12 +46,12 @@ public class AnchorState extends PersistentState{
             BlockPos.CODEC.listOf()
                     .fieldOf("anchors")
                     .codec()
-                    .xmap(AnchorState::new, AnchorState::getAnchors);// 通过 CODEC 读取到的列表
+                    .xmap(AnchorState::new, AnchorState::getAnchors);
 
     private static final PersistentStateType<AnchorState> TYPE =
             new PersistentStateType<>(
                 KEY,
-                AnchorState::new, // 当没有存档时，创建空实例
+                AnchorState::new, // 没有存档时，创建空实例
                 CODEC,
                 null // DataFixTypes，可为 null
             );

@@ -20,6 +20,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 public class BuildHandler {
     public static final String PARENT_PATH = "config/mybuilds";
@@ -43,6 +44,17 @@ public class BuildHandler {
                     player.sendMessage(Text.literal(file), false);
                 }
             }
+        }
+    }
+
+    // 列举锚点位置
+    public static void listAnchors(ServerCommandSource source) {
+        ServerPlayerEntity player = source.getPlayer();
+        ServerWorld world = source.getWorld();
+        AnchorState cache = AnchorState.getState(world.getServer());// 获取缓存
+        List<BlockPos> anchors = cache.getAnchors();// 获取锚点列表
+        for (BlockPos p : anchors) {
+            player.sendMessage(Text.literal(p.toString()), false);
         }
     }
 
@@ -71,21 +83,20 @@ public class BuildHandler {
 
         try {
             Path filePath = Paths.get(PARENT_PATH, filename + ".json"); // 存放目录
-            JsonArray arr = JsonParser.parseReader(new FileReader(filePath.toFile())).getAsJsonArray();
+            //JsonArray arr = JsonParser.parseReader(new FileReader(filePath.toFile())).getAsJsonArray();
+            JsonObject obj = JsonParser.parseReader(new FileReader(filePath.toFile())).getAsJsonObject();
 
-            for (JsonElement el : arr) {
-                JsonObject obj = el.getAsJsonObject();
-
-                String blockId = obj.get("block").getAsString();
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                String blockId = entry.getKey();
                 Block block = Registries.BLOCK.get(Identifier.of(blockId));
                 if (block == Blocks.AIR) continue;
 
-                JsonArray coords = obj.getAsJsonArray("pos");
+                JsonArray coords = entry.getValue().getAsJsonArray();
                 for (JsonElement coordEl : coords) {
-                    JsonArray coord = coordEl.getAsJsonArray();
-                    int dx = coord.get(0).getAsInt();
-                    int dy = coord.get(1).getAsInt();
-                    int dz = coord.get(2).getAsInt();
+                    JsonArray arr = coordEl.getAsJsonArray();
+                    int dx = arr.get(0).getAsInt();
+                    int dy = arr.get(1).getAsInt();
+                    int dz = arr.get(2).getAsInt();
 
                     BlockPos placePos = transformPos(origin, dx, dy, dz, facing);
                     world.setBlockState(placePos, block.getDefaultState());

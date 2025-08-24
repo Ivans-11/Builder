@@ -3,7 +3,7 @@
 	"id": "builder",
 	"version": "${version}",
 	"name": "Builder",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "This mod uses Minecrftify-generated JSON files to batch import blocks into Minecraft.",
 	"authors": [
 		"Ivans"
 	],

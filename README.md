@@ -33,6 +33,7 @@ Of course, this mod can also be used independently. As long as you can generate 
 
    * Keys are block IDs, and values are arrays of relative coordinates.
    * You can use [**Minecraftify2.0**](https://github.com/Ivans-11/Minecraftify2/releases) to generate JSON files from 3D models. See its [repository documentation](https://github.com/Ivans-11/Minecraftify2) for details.
+   * You can also use the `/builder save` command to export JSON files from the current world. See the following content for specific usage.
 
 2. Place a `builder:anchor_block` in the game world to define the reference origin and orientation.
 
@@ -55,6 +56,14 @@ Of course, this mod can also be used independently. As long as you can generate 
    ```
 
    This will revert the most recent build (up to 3 steps).
+5. If you need to export a build from the current world, enter:
+
+   ```
+   /builder save <x> <y> <z> <name>
+   ```
+   Where `<x> <y> <z>` represents the selected area range.
+   The mod will use the nearest anchor block to the player as the starting point `(0,0,0)` and export the block data in the range from `(0,0,0)` to `(x,y,z)` to the `config/mybuilds/<name>.json` file.
+   Note that the x-axis corresponds to the red axis, the y-axis corresponds to the green axis, and the z-axis corresponds to the blue axis. The format of the exported JSON file is the same as that of the imported one.
 
 ## Command List
 
@@ -66,6 +75,12 @@ Of course, this mod can also be used independently. As long as you can generate 
   List the coordinates of all anchor blocks
 * `/builder undo`
   Undo the most recent build operation
+* `/builder clear`
+  Clear all anchor blocks
+* `/builder save <x> <y> <z> <name>`
+  Export the block data within the specified area to the `config/mybuilds/<name>.json` file.
+* `/builder help`
+  Show help information
 
 ## Notes
 
@@ -76,6 +91,8 @@ Of course, this mod can also be used independently. As long as you can generate 
   ![](image/item_en.png)
 
 * Undo only applies to blocks placed using the `/builder place` command, and does not affect manually placed blocks.
+
+* Since JSON files only record the relative coordinates of blocks, it is not possible to import some special blocks (such as stairs, doors, etc., which contain more information) accurately.
 
 ## Acknowledgements
 

@@ -30,7 +30,8 @@
     }
    ```
    - 其中，键为方块 ID，值为相对坐标数组。
-   - 可使用工具 [**Minecraftify2.0**](https://github.com/Ivans-11/Minecraftify2/releases) 从三维模型文件生成，具体使用方法见其[仓库说明](https://github.com/Ivans-11/Minecraftify2)
+   - 可使用工具 [**Minecraftify2.0**](https://github.com/Ivans-11/Minecraftify2/releases) 从三维模型文件生成，具体使用方法见其[仓库说明](https://github.com/Ivans-11/Minecraftify2)。
+   - 也可利用 `/builder save` 命令从当前世界导出 JSON 文件，具体使用方法见后文。
 2. 在游戏中放置一个 `builder:anchor_block`（锚点方块） ，用于确定参考坐标系原点和朝向。
 
     ![](image/anchor.png)
@@ -50,6 +51,14 @@
    ```
 
    将撤回最近一次生成操作（最多支持 3 步）。
+5. 如果需要导出当前世界的建筑，输入：
+
+   ```
+   /builder save <x> <y> <z> <name>
+   ```
+   其中，`<x> <y> <z>` 为选择的区域范围
+   模组将以距离玩家最近的锚点为起始点 `(0,0,0)` ，导出 `(0,0,0)` 到 `(x,y,z)` 范围内的方块数据到 `config/mybuilds/<name>.json` 文件中。
+   注意，x 为红轴方向，y 为绿轴方向，z 为蓝轴方向。导出的 JSON 文件格式与导入的格式相同。
 
 ## 命令列表
 
@@ -61,6 +70,12 @@
   列出所有锚点方块的坐标
 - `/builder undo`
   撤回最近一次生成操作
+- `/builder clear`
+  清除所有锚点方块
+- `/builder save <x> <y> <z> <name>`
+  导出指定区域内的方块数据到 `config/mybuilds/<name>.json` 文件中
+- `/builder help`
+  显示帮助信息
 
 ## 注意
 
@@ -68,7 +83,8 @@
 - 锚点方块可在建筑方块物品栏中找到。
 
     ![](image/item_zh.png)
-- 撤回仅能恢复由 `/build place` 命令生成的方块，不影响手动放置的方块。
+- 撤回仅能恢复由 `/builder place` 命令生成的方块，不影响手动放置的方块。
+- 由于 JSON 文件只记录了方块的相对坐标，因此对于一些特殊的方块（如楼梯、门等包含更多信息的方块），无法做到精确导入。
 
 ## 致谢
 

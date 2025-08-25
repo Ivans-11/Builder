@@ -8,11 +8,11 @@
 		"Ivans"
 	],
 	"contact": {
-		"homepage": "https://github.com/Ivans-11/Builder",
+		"homepage": "https://www.curseforge.com/minecraft/mc-mods/builder-from-json",
 		"sources": "https://github.com/Ivans-11/Builder",
 		"issues": "https://github.com/Ivans-11/Builder/issues"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/builder/icon.png",
 	"environment": "*",
 	"entrypoints": {

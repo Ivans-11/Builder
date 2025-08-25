@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.example.block.AnchorBlock;
+import com.example.block.AnchorState;
+
 import net.minecraft.block.BlockState;
 //import net.minecraft.block.entity.BlockEntity;
 //import net.minecraft.nbt.NbtCompound;
@@ -47,6 +50,10 @@ public class UndoManager {
                     //be.readNbt(snap.nbt);
                 //}
             //}
+            // If it is an anchor block, record the position
+            if (snap.state.getBlock() instanceof AnchorBlock) {
+                AnchorState.getState(world.getServer()).add(snap.pos);
+            }
         }
 
         player.sendMessage(Text.literal("Undo Success"), false);

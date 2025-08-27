@@ -15,7 +15,6 @@ import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.property.Properties;
-import net.minecraft.state.property.Property;
 import net.minecraft.text.Text;
 
 import java.io.FileReader;

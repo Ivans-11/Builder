@@ -11,9 +11,11 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.property.Properties;
+import net.minecraft.state.property.Property;
 import net.minecraft.text.Text;
 
 import java.io.FileReader;
@@ -117,38 +119,23 @@ public class BuildHandler {
 
                 // If it is an anchor block, record the position
                 if (block instanceof AnchorBlock) {
-                    player.sendMessage(Text.literal("Anchor Block Found: " + origin), false);
-                    for (JsonElement coordEl : coords) {
-                        JsonArray arr = coordEl.getAsJsonArray();
-                        int dx = arr.get(0).getAsInt();
-                        int dy = arr.get(1).getAsInt();
-                        int dz = arr.get(2).getAsInt();
-
-                        BlockPos placePos = transformPos(origin, dx, dy, dz, facing);
-
-                        BlockState oldState = world.getBlockState(placePos);
-                        snapshots.add(new UndoManager.BlockSnapshot(placePos, oldState));
-                        world.setBlockState(placePos, block.getDefaultState());
-                        player.sendMessage(Text.literal("Anchor Block Placed: " + placePos), false);
-                        cache.add(placePos);
-                        player.sendMessage(Text.literal("Anchor Block Added: " + placePos), false);
-                    }
+                    handleAnchors(world, coords, block, facing, origin, snapshots, cache);
                     continue;
                 }
 
-                for (JsonElement coordEl : coords) {
-                    JsonArray arr = coordEl.getAsJsonArray();
-                    int dx = arr.get(0).getAsInt();
-                    int dy = arr.get(1).getAsInt();
-                    int dz = arr.get(2).getAsInt();
-
-                    BlockPos placePos = transformPos(origin, dx, dy, dz, facing);
-
-                    BlockState oldState = world.getBlockState(placePos);
-                    snapshots.add(new UndoManager.BlockSnapshot(placePos, oldState));
-
-                    world.setBlockState(placePos, block.getDefaultState());
+                // If it is a block with facing
+                if (block.getDefaultState().contains(Properties.HORIZONTAL_FACING)) {
+                    handleFacing(world, coords, block, facing, origin, snapshots);
+                    continue;
                 }
+
+                // If it is a block with axis
+                if (block.getDefaultState().contains(Properties.AXIS)) {
+                    handleAxis(world, coords, block, facing, origin, snapshots);
+                    continue;
+                }
+
+                handleNormal(world, coords, block, facing, origin, snapshots);
             }
 
             UndoManager.record(player, snapshots);// Record snapshots
@@ -198,6 +185,16 @@ public class BuildHandler {
                         arr.add(dx);
                         arr.add(dy);
                         arr.add(dz);
+
+                        // Record the rotation of the block
+                        if (state.contains(Properties.HORIZONTAL_FACING)) {
+                            Direction blockFacing = state.get(Properties.HORIZONTAL_FACING);
+                            arr.add(relativeDirection(facing, blockFacing));
+                        } else if (state.contains(Properties.AXIS)) {
+                            Axis blockAxis = state.get(Properties.AXIS);
+                            arr.add(relativeAxis(facing, blockAxis));
+                        }
+
                         if (obj.has(blockId)) {
                             obj.get(blockId).getAsJsonArray().add(arr);
                         } else {
@@ -221,6 +218,77 @@ public class BuildHandler {
         }
     }
 
+    // Place normal blocks
+    private static void handleNormal(ServerWorld world, JsonArray coords, Block block, Direction facing, BlockPos origin, List<UndoManager.BlockSnapshot> snapshots) {
+        for (JsonElement coordEl : coords) {
+            JsonArray arr = coordEl.getAsJsonArray();
+            int dx = arr.get(0).getAsInt();
+            int dy = arr.get(1).getAsInt();
+            int dz = arr.get(2).getAsInt();
+
+            BlockPos placePos = transformPos(origin, dx, dy, dz, facing);
+
+            BlockState oldState = world.getBlockState(placePos);
+            snapshots.add(new UndoManager.BlockSnapshot(placePos, oldState));
+
+            world.setBlockState(placePos, block.getDefaultState());
+        }
+    }
+
+    // Place anchor blocks
+    private static void handleAnchors(ServerWorld world, JsonArray coords, Block block, Direction facing, BlockPos origin, List<UndoManager.BlockSnapshot> snapshots, AnchorState cache) {
+        for (JsonElement coordEl : coords) {
+            JsonArray arr = coordEl.getAsJsonArray();
+            int dx = arr.get(0).getAsInt();
+            int dy = arr.get(1).getAsInt();
+            int dz = arr.get(2).getAsInt();
+            int rotation = arr.size() > 3 ? arr.get(3).getAsInt() : 0;
+
+            BlockPos placePos = transformPos(origin, dx, dy, dz, facing);
+
+            BlockState oldState = world.getBlockState(placePos);
+            snapshots.add(new UndoManager.BlockSnapshot(placePos, oldState));
+
+            world.setBlockState(placePos, block.getDefaultState().with(Properties.HORIZONTAL_FACING, absoluteDirection(facing, rotation)));
+            cache.add(placePos);// Add to cache
+        }
+    }
+
+    // Place blocks with facing
+    private static void handleFacing(ServerWorld world, JsonArray coords, Block block, Direction facing, BlockPos origin, List<UndoManager.BlockSnapshot> snapshots) {
+        for (JsonElement coordEl : coords) {
+            JsonArray arr = coordEl.getAsJsonArray();
+            int dx = arr.get(0).getAsInt();
+            int dy = arr.get(1).getAsInt();
+            int dz = arr.get(2).getAsInt();
+            int rotation = arr.size() > 3? arr.get(3).getAsInt() : 0;
+
+            BlockPos placePos = transformPos(origin, dx, dy, dz, facing);
+
+            BlockState oldState = world.getBlockState(placePos);
+            snapshots.add(new UndoManager.BlockSnapshot(placePos, oldState));
+
+            world.setBlockState(placePos, block.getDefaultState().with(Properties.HORIZONTAL_FACING, absoluteDirection(facing, rotation)));
+        }
+    }
+
+    // Place blocks with axis
+    private static void handleAxis(ServerWorld world, JsonArray coords, Block block, Direction facing, BlockPos origin, List<UndoManager.BlockSnapshot> snapshots) {
+        for (JsonElement coordEl : coords) {
+            JsonArray arr = coordEl.getAsJsonArray();
+            int dx = arr.get(0).getAsInt();
+            int dy = arr.get(1).getAsInt();
+            int dz = arr.get(2).getAsInt();
+            int axis = arr.size() > 3? arr.get(3).getAsInt() : 0;
+
+            BlockPos placePos = transformPos(origin, dx, dy, dz, facing);
+
+            BlockState oldState = world.getBlockState(placePos);
+            snapshots.add(new UndoManager.BlockSnapshot(placePos, oldState));
+
+            world.setBlockState(placePos, block.getDefaultState().with(Properties.AXIS, absoluteAxis(facing, axis)));
+        }
+    }
 
     // Transform position based on facing
     private static BlockPos transformPos(BlockPos origin, int dx, int dy, int dz, Direction facing) {
@@ -251,5 +319,65 @@ public class BuildHandler {
         AnchorState cache = AnchorState.getState(world.getServer());// Get cache
         // Get copy of anchors to avoid ConcurrentModificationException
         return new ArrayList<>(cache.getAnchors());
+    }
+
+    // Get the relative direction of the block to the anchor (using positive numbers)
+    private static int relativeDirection(Direction anchorFacing, Direction blockFacing) {
+        int offset = intDirection(blockFacing) - intDirection(anchorFacing);
+        if (offset < 0) offset += 4;
+        return offset;
+    }
+
+    // Get the relative axis of the block to the anchor (using negative numbers)
+    private static int relativeAxis(Direction anchorFacing, Axis blockAxis) {
+        if (blockAxis == Axis.X) {
+            if (anchorFacing == Direction.NORTH || anchorFacing == Direction.SOUTH) return -1;
+            if (anchorFacing == Direction.EAST || anchorFacing == Direction.WEST) return -2;
+        } else if (blockAxis == Axis.Z) {
+            if (anchorFacing == Direction.NORTH || anchorFacing == Direction.SOUTH) return -2;
+            if (anchorFacing == Direction.EAST || anchorFacing == Direction.WEST) return -1;
+        }
+        return -3;
+    }
+
+    // Get the absolute direction of the block based on the anchor and the relative direction
+    private static Direction absoluteDirection(Direction anchorFacing, int relativeDirection) {
+        int absolute = intDirection(anchorFacing) + relativeDirection;
+        if (absolute >= 4) absolute -= 4;
+        return getDirection(absolute);
+    }
+
+    // Get the absolute axis of the block based on the anchor and the relative axis
+    private static Axis absoluteAxis(Direction anchorFacing, int relativeAxis) {
+        if (anchorFacing == Direction.NORTH || anchorFacing == Direction.SOUTH) {
+            if (relativeAxis == -1) return Axis.X;
+            if (relativeAxis == -2) return Axis.Z;
+        } else if (anchorFacing == Direction.EAST || anchorFacing == Direction.WEST) {
+            if (relativeAxis == -1) return Axis.Z;
+            if (relativeAxis == -2) return Axis.X;
+        }
+        return Axis.Y;
+    }
+
+    // Convert direction to integer
+    private static int intDirection(Direction dir) {
+        switch (dir) {
+            case NORTH: return 0;
+            case EAST: return 1;
+            case SOUTH: return 2;
+            case WEST: return 3;
+            default: return 0;
+        }
+    }
+
+    // Convert integer to direction
+    private static Direction getDirection(int dir) {
+        switch (dir) {
+            case 0: return Direction.NORTH;
+            case 1: return Direction.EAST;
+            case 2: return Direction.SOUTH;
+            case 3: return Direction.WEST;
+            default: return Direction.NORTH;
+        }
     }
 }
